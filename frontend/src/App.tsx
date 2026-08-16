@@ -21,6 +21,7 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import GapFinder from './pages/GapFinder';
 import KnowledgeGraph from './pages/KnowledgeGraph';
+import WebExplorer from './pages/WebExplorer';
 
 export function App() {
   return (
@@ -31,6 +32,7 @@ export function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/web-explorer" element={<WebExplorer />} />
           <Route path="/gap-finder" element={<GapFinder />} />
           <Route path="/graph" element={<KnowledgeGraph />} />
           <Route path="/papers" element={<Papers />} />

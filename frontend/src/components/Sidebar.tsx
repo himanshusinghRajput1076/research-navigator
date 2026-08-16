@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, HelpCircle, Network, TestTube, Database, Code, Search, Settings, FileText, Sparkles, Share2 } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, HelpCircle, Network, TestTube, Database, Code, Search, Settings, FileText, Sparkles, Share2, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Sidebar() {
@@ -15,6 +15,7 @@ export function Sidebar() {
     {
       label: 'Research',
       items: [
+        { icon: Globe, label: 'Web Explorer', to: '/web-explorer' },
         { icon: BookOpen, label: 'Projects', to: '/projects' },
         { icon: FileText, label: 'Papers', to: '/papers' },
         { icon: Users, label: 'Researchers', to: '/researchers' }
