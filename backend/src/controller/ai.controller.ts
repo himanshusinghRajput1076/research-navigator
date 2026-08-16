@@ -26,4 +26,13 @@ router.post('/identify-gaps', async (req: AuthRequest, res: Response, next: Next
   }
 });
 
+router.post('/generate-hypothesis', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const hypothesis = await aiService.generateHypothesis(req.body);
+    res.json(createSuccessResponse(hypothesis));
+  } catch (error) {
+    next(error);
+  }
+});
+
 export const aiRouter = router;

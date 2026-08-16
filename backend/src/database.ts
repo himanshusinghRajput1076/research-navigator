@@ -34,9 +34,10 @@ import path from 'path';
 // --------------------------------------------------------------------------
 class InMemoryStore {
   private tables = new Map<string, any[]>();
+  public initializationPromise: Promise<void>;
 
   constructor() {
-    this.seedDefaultData();
+    this.initializationPromise = this.seedDefaultData();
   }
 
   getTable(name: string): any[] {
@@ -326,11 +327,38 @@ function createMockRepository<T extends ObjectLiteral>(entityClass: any): Reposi
       let list = [...table];
 
       if (options?.where) {
-        list = list.filter((item) => {
-          return Object.entries(options.where).every(([k, v]) => {
-            if (v === undefined) return true;
-            return item[k] === v;
+        if (Array.isArray(options.where)) {
+          list = list.filter((item) => {
+            return options.where.some((condition: any) => {
+              return Object.entries(condition).every(([k, v]) => {
+                if (v === undefined) return true;
+                return item[k] === v;
+              });
+            });
           });
+        } else {
+          list = list.filter((item) => {
+            return Object.entries(options.where).every(([k, v]) => {
+              if (v === undefined) return true;
+              return item[k] === v;
+            });
+          });
+        }
+      }
+
+      if (options?.order) {
+        list.sort((a, b) => {
+          for (const [key, dir] of Object.entries(options.order)) {
+            const dirStr = String(dir).toUpperCase();
+            const valA = a[key];
+            const valB = b[key];
+            
+            if (valA === valB) continue;
+            
+            if (valA < valB) return dirStr === 'DESC' ? 1 : -1;
+            if (valA > valB) return dirStr === 'DESC' ? -1 : 1;
+          }
+          return 0;
         });
       }
 
@@ -478,6 +506,7 @@ export const AppDataSource = new Proxy(realDataSource, {
           logger.warn(`PostgreSQL unreachable: ${error.message}`);
           logger.info('Activating Dynamic In-Memory Research OS Database Engine with comprehensive pre-seeded scientific dataset.');
           isUsingMockStore = true;
+          await inMemoryStore.initializationPromise;
           return target;
         }
       };
