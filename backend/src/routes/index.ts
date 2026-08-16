@@ -16,6 +16,7 @@ import { citationRouter } from '../controller/citation.controller';
 import { searchRouter } from '../controller/search.controller';
 import { dashboardRouter } from '../controller/dashboard.controller';
 import { aiRouter } from '../controller/ai.controller';
+import { academicRouter } from '../controller/academic.controller';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/citations', citationRouter);
 router.use('/search', searchRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/ai', aiRouter);
+router.use('/academic', academicRouter);
 
 export const apiRouter = router;
