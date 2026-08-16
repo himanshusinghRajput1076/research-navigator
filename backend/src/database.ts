@@ -26,6 +26,8 @@ import { ApiAuditLog } from './entity/ApiAuditLog';
 import { v4 as uuidv4 } from 'uuid';
 import { hashPassword } from './utils/password';
 import { logger } from './utils/logger';
+import fs from 'fs';
+import path from 'path';
 
 // --------------------------------------------------------------------------
 // IN-MEMORY DYNAMIC STORE (Active when PostgreSQL is offline)
@@ -59,168 +61,200 @@ class InMemoryStore {
         institution: 'Research Discovery Lab',
         country: 'Global',
         role: 'ADMIN',
-        research_interests: ['IoT Security', 'Anomaly Detection', 'RF Fingerprinting', 'Adversarial AI'],
+        research_interests: [
+          'IoT Security',
+          'Anomaly Detection',
+          'RF Fingerprinting',
+          'Adversarial AI',
+          'Transformers',
+          'SLAM',
+        ],
         created_at: new Date(),
         updated_at: new Date(),
         is_deleted: false,
       });
     }
 
-    // Taxonomy Fields
-    const fields = this.getTable('research_fields');
-    const subfields = this.getTable('research_subfields');
+    // Resolve seed_data.json path
+    const candidatePaths = [
+      path.join(__dirname, 'seeds', 'seed_data.json'),
+      path.join(__dirname, '..', 'src', 'seeds', 'seed_data.json'),
+      path.join(process.cwd(), 'src', 'seeds', 'seed_data.json'),
+      path.join(process.cwd(), 'backend', 'src', 'seeds', 'seed_data.json'),
+      path.join(process.cwd(), 'dist', 'seeds', 'seed_data.json'),
+    ];
 
-    if (fields.length === 0) {
-      const taxonomy = [
-        { id: 'f1', name: 'Computer Science', slug: 'computer-science', color: '#3B82F6', icon: 'Cpu', desc: 'Core computing & algorithmic systems.' },
-        { id: 'f2', name: 'Cybersecurity', slug: 'cybersecurity', color: '#EF4444', icon: 'Shield', desc: 'Hardware, network & ML security.' },
-        { id: 'f3', name: 'IoT & Embedded Systems', slug: 'iot-embedded-systems', color: '#10B981', icon: 'Radio', desc: 'Smart sensors & edge compute.' },
-        { id: 'f4', name: 'Signal & Information Processing', slug: 'signal-information-processing', color: '#8B5CF6', icon: 'Activity', desc: 'DSP & time-series analysis.' },
-        { id: 'f5', name: 'Waves / Frequency / Electromagnetics', slug: 'waves-frequency-electromagnetics', color: '#F59E0B', icon: 'Wifi', desc: 'RF fingerprinting & spectrum.' },
-        { id: 'f6', name: 'Physics + Computing', slug: 'physics-computing', color: '#6366F1', icon: 'Compass', desc: 'Geomagnetic & quantum simulation.' },
-        { id: 'f7', name: 'Mathematics for Research', slug: 'mathematics-for-research', color: '#EC4899', icon: 'Calculator', desc: 'Optimization & graph theory.' },
-        { id: 'f8', name: 'Robotics & Autonomous Systems', slug: 'robotics-autonomous-systems', color: '#14B8A6', icon: 'Bot', desc: 'SLAM & multi-agent control.' },
-        { id: 'f9', name: 'Emerging / Interdisciplinary', slug: 'emerging-interdisciplinary', color: '#F97316', icon: 'Sparkles', desc: 'Bio-inspired & neuromorphic.' },
-      ];
-
-      for (const t of taxonomy) {
-        fields.push({
-          id: t.id,
-          name: t.name,
-          slug: t.slug,
-          color: t.color,
-          icon: t.icon,
-          description: t.desc,
-          created_by: adminId,
-          created_at: new Date(),
-          updated_at: new Date(),
-          is_deleted: false,
-        });
-
-        subfields.push({
-          id: uuidv4(),
-          field_id: t.id,
-          name: `${t.name} Advanced Research`,
-          slug: `${t.slug}-advanced`,
-          description: `Frontier research subfield for ${t.name}`,
-          created_by: adminId,
-          created_at: new Date(),
-          updated_at: new Date(),
-          is_deleted: false,
-        });
+    let seedFilePath: string | null = null;
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        seedFilePath = p;
+        break;
       }
     }
 
-    // Benchmark Datasets
-    const datasets = this.getTable('datasets');
-    if (datasets.length === 0) {
-      datasets.push(
-        {
-          id: uuidv4(),
-          user_id: adminId,
-          name: 'N-BaIoT',
-          description: 'Network traffic anomaly detection dataset for identifying IoT botnet attacks from 9 commercial IoT devices.',
-          domain: 'Cybersecurity / IoT',
-          size_mb: 5400,
-          num_samples: 7062604,
-          num_features: 115,
-          license: 'CC BY 4.0',
-          source_url: 'https://archive.ics.uci.edu/dataset/442/n+baiot+dataset',
-          created_at: new Date(),
-          updated_at: new Date(),
-          is_deleted: false,
-        },
-        {
-          id: uuidv4(),
-          user_id: adminId,
-          name: 'CICIoT2023',
-          description: 'Large-scale real-world IoT attack dataset with 33 attack classes across 105 smart devices.',
-          domain: 'Cybersecurity',
-          size_mb: 18000,
-          num_samples: 46686579,
-          num_features: 46,
-          license: 'Free for Research',
-          source_url: 'https://www.unb.ca/cic/datasets/iot-dataset-2023.html',
-          created_at: new Date(),
-          updated_at: new Date(),
-          is_deleted: false,
-        },
-        {
-          id: uuidv4(),
-          user_id: adminId,
-          name: 'IoTGeM',
-          description: 'Geomagnetic anomaly detection dataset for detecting physical tampering of IoT nodes.',
-          domain: 'Physics / IoT',
-          size_mb: 850,
-          num_samples: 1250000,
-          num_features: 32,
-          license: 'MIT',
-          source_url: 'https://github.com/research/iotgem',
-          created_at: new Date(),
-          updated_at: new Date(),
-          is_deleted: false,
+    if (seedFilePath) {
+      try {
+        const raw = fs.readFileSync(seedFilePath, 'utf-8');
+        const data = JSON.parse(raw);
+
+        // Fields & Subfields
+        const fields = this.getTable('research_fields');
+        const subfields = this.getTable('research_subfields');
+        for (const f of data.fields || []) {
+          fields.push({
+            id: f.id,
+            name: f.name,
+            slug: f.slug,
+            color: f.color,
+            icon: f.icon,
+            description: f.description,
+            created_by: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+          for (const s of f.subfields || []) {
+            subfields.push({
+              id: uuidv4(),
+              field_id: f.id,
+              name: s.name,
+              slug: s.slug,
+              description: `Subfield for ${f.name}`,
+              created_by: adminId,
+              created_at: new Date(),
+              updated_at: new Date(),
+              is_deleted: false,
+            });
+          }
         }
-      );
-    }
 
-    // Sample Research Problem
-    const problems = this.getTable('research_problems');
-    if (problems.length === 0) {
-      const probId = uuidv4();
-      problems.push({
-        id: probId,
-        user_id: adminId,
-        title: 'Adversarial Robustness in Lightweight IoT Intrusion Detection',
-        description: 'Deep neural networks deployed on resource-constrained microcontrollers degrade significantly under slight adversarial perturbations and concept drift in IoT environments.',
-        research_question: 'Can lightweight RF physical-layer feature extraction improve anomaly classification accuracy while maintaining <10ms inference latency?',
-        why_it_matters: 'IoT edge devices in critical infrastructure require tamper-proof security without battery exhaustion.',
-        difficulty_level: 'ADVANCED',
-        impact_score: 9,
-        novelty_score: 8,
-        field_id: 'f2',
-        status: 'INVESTIGATING',
-        created_at: new Date(),
-        updated_at: new Date(),
-        is_deleted: false,
-      });
+        // Researchers
+        const researchers = this.getTable('researchers');
+        for (const r of data.researchers || []) {
+          researchers.push({
+            ...r,
+            added_by: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
 
-      // Sample Gap
-      const gaps = this.getTable('research_gaps');
-      gaps.push({
-        id: uuidv4(),
-        user_id: adminId,
-        problem_id: probId,
-        field_id: 'f2',
-        title: 'Lack of multi-modal RF and network traffic fusion under continuous concept drift',
-        gap_statement: 'Existing methods evaluate network packet features and RF physical layers in isolation, missing cross-layer correlations.',
-        evidence: 'Literature review of IEEE S&P and ACM CCS papers from 2020-2024 shows zero benchmarks combining N-BaIoT with RF side-channels.',
-        confidence_score: 8,
-        novelty_estimate: 9,
-        impact_estimate: 9,
-        gap_status: 'STRONGLY_SUPPORTED',
-        created_at: new Date(),
-        updated_at: new Date(),
-        is_deleted: false,
-      });
+        // Papers
+        const papers = this.getTable('papers');
+        for (const p of data.papers || []) {
+          papers.push({
+            ...p,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
 
-      // Sample Papers
-      const papers = this.getTable('papers');
-      papers.push({
-        id: uuidv4(),
-        user_id: adminId,
-        title: 'Attention Is All You Need',
-        abstract: 'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks. We propose the Transformer, a model architecture eschewing recurrence.',
-        authors: [{ name: 'Ashish Vaswani' }, { name: 'Noam Shazeer' }, { name: 'Niki Parmar' }],
-        publication_year: 2017,
-        venue: 'NeurIPS',
-        reading_status: 'ANALYZED',
-        importance_score: 10,
-        field_id: 'f1',
-        methodology: 'Multi-head self-attention mechanisms with positional encodings.',
-        created_at: new Date(),
-        updated_at: new Date(),
-        is_deleted: false,
-      });
+        // Problems
+        const problems = this.getTable('research_problems');
+        for (const pr of data.problems || []) {
+          problems.push({
+            ...pr,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Solutions
+        const solutions = this.getTable('existing_solutions');
+        for (const sol of data.solutions || []) {
+          solutions.push({
+            ...sol,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Gaps
+        const gaps = this.getTable('research_gaps');
+        for (const g of data.gaps || []) {
+          gaps.push({
+            ...g,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Hypotheses
+        const hypotheses = this.getTable('hypotheses');
+        for (const h of data.hypotheses || []) {
+          hypotheses.push({
+            ...h,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Experiments
+        const experiments = this.getTable('experiments');
+        for (const exp of data.experiments || []) {
+          experiments.push({
+            ...exp,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Datasets
+        const datasets = this.getTable('datasets');
+        for (const ds of data.datasets || []) {
+          datasets.push({
+            ...ds,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Algorithms
+        const algorithms = this.getTable('algorithms');
+        for (const al of data.algorithms || []) {
+          algorithms.push({
+            ...al,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        // Notes
+        const notes = this.getTable('notes');
+        for (const n of data.notes || []) {
+          notes.push({
+            ...n,
+            user_id: adminId,
+            created_at: new Date(),
+            updated_at: new Date(),
+            is_deleted: false,
+          });
+        }
+
+        logger.info(
+          `Successfully loaded ${papers.length} landmark papers, ${researchers.length} scientists, ${problems.length} problems, ${gaps.length} research gaps, ${datasets.length} benchmark datasets, and ${algorithms.length} algorithms into dynamic store.`
+        );
+      } catch (err: any) {
+        logger.warn(`Failed loading seed_data.json: ${err.message}`);
+      }
+    } else {
+      logger.warn('seed_data.json path could not be resolved.');
     }
   }
 }
@@ -231,8 +265,6 @@ export const inMemoryStore = new InMemoryStore();
 // MOCK REPOSITORY FACTORY
 // --------------------------------------------------------------------------
 function createMockRepository<T extends ObjectLiteral>(entityClass: any): Repository<T> {
-  const tableName = entityClass.name.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '') + 's';
-  // Specific entity mapping
   const tableMap: Record<string, string> = {
     User: 'users',
     ResearchField: 'research_fields',
@@ -258,7 +290,9 @@ function createMockRepository<T extends ObjectLiteral>(entityClass: any): Reposi
     ApiAuditLog: 'api_audit_log',
   };
 
-  const actualTable = tableMap[entityClass.name] || tableName;
+  const actualTable =
+    tableMap[entityClass.name] ||
+    entityClass.name.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '') + 's';
 
   const mockRepo = {
     create(data?: any): any {
@@ -321,8 +355,6 @@ function createMockRepository<T extends ObjectLiteral>(entityClass: any): Reposi
       let whereClauses: Array<{ field: string; op: string; val: any }> = [];
       let limitCount = 50;
       let offsetCount = 0;
-      let orderField = 'created_at';
-      let orderDir = 'DESC';
 
       const qb: any = {
         where(clause: string, params: any) {
@@ -342,8 +374,6 @@ function createMockRepository<T extends ObjectLiteral>(entityClass: any): Reposi
           return qb;
         },
         orderBy(field: string, dir = 'ASC') {
-          orderField = field.replace(`${alias}.`, '');
-          orderDir = dir;
           return qb;
         },
         addOrderBy(field: string, dir = 'ASC') {
@@ -427,7 +457,6 @@ const realDataSource = new DataSource({
 
 export let isUsingMockStore = false;
 
-// Proxy DataSource that seamlessly routes getRepository to either PostgreSQL or InMemoryStore
 export const AppDataSource = new Proxy(realDataSource, {
   get(target, prop) {
     if (prop === 'getRepository') {
@@ -447,7 +476,7 @@ export const AppDataSource = new Proxy(realDataSource, {
           return ds;
         } catch (error: any) {
           logger.warn(`PostgreSQL unreachable: ${error.message}`);
-          logger.info('Activating Dynamic In-Memory Research OS Database Engine with auto-seeded demo data.');
+          logger.info('Activating Dynamic In-Memory Research OS Database Engine with comprehensive pre-seeded scientific dataset.');
           isUsingMockStore = true;
           return target;
         }
