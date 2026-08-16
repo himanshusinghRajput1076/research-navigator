@@ -1,12 +1,16 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, HelpCircle, Network, TestTube, Database, Code, Search, Settings, FileText } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, HelpCircle, Network, TestTube, Database, Code, Search, Settings, FileText, Sparkles, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Sidebar() {
   const sections = [
     {
       label: 'Overview',
-      items: [{ icon: LayoutDashboard, label: 'Dashboard', to: '/' }]
+      items: [
+        { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
+        { icon: Sparkles, label: 'AI Gap Finder', to: '/gap-finder' },
+        { icon: Share2, label: 'Knowledge Graph', to: '/graph' },
+      ]
     },
     {
       label: 'Research',
@@ -50,7 +54,7 @@ export function Sidebar() {
     <aside className="w-[250px] flex-shrink-0 border-r border-slate-700 bg-slate-900 flex flex-col overflow-y-auto">
       <div className="h-16 flex items-center px-6 border-b border-slate-700 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/30">
             <span className="text-white font-bold text-xl">R</span>
           </div>
           <span className="font-semibold text-lg text-white tracking-tight">Research OS</span>
@@ -71,7 +75,7 @@ export function Sidebar() {
                   className={({ isActive }) => cn(
                     "flex items-center gap-3 px-2 py-2 rounded-lg text-sm font-medium transition-colors",
                     isActive 
-                      ? "bg-indigo-500/10 text-indigo-400" 
+                      ? "bg-indigo-500/10 text-indigo-400 font-semibold" 
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
                   )}
                 >

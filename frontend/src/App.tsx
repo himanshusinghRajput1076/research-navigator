@@ -19,6 +19,8 @@ import Algorithms from './pages/Algorithms';
 import Notes from './pages/Notes';
 import Search from './pages/Search';
 import Settings from './pages/Settings';
+import GapFinder from './pages/GapFinder';
+import KnowledgeGraph from './pages/KnowledgeGraph';
 
 export function App() {
   return (
@@ -29,6 +31,8 @@ export function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/gap-finder" element={<GapFinder />} />
+          <Route path="/graph" element={<KnowledgeGraph />} />
           <Route path="/papers" element={<Papers />} />
           <Route path="/papers/:id" element={<PaperDetail />} />
           <Route path="/projects" element={<Projects />} />

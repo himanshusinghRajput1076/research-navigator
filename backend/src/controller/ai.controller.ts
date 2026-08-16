@@ -8,6 +8,16 @@ const aiService = new AiService();
 
 router.use(authenticate);
 
+router.post('/chat', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { messages } = req.body;
+    const response = await aiService.chat(messages || []);
+    res.json(createSuccessResponse(response));
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/explain-paper', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const analysis = await aiService.explainPaper(req.body, req.body.expertise_level);
@@ -30,6 +40,15 @@ router.post('/generate-hypothesis', async (req: AuthRequest, res: Response, next
   try {
     const hypothesis = await aiService.generateHypothesis(req.body);
     res.json(createSuccessResponse(hypothesis));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/design-experiment', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const protocol = await aiService.designExperiment(req.body);
+    res.json(createSuccessResponse(protocol));
   } catch (error) {
     next(error);
   }

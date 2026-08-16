@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePaper, useUpdatePaper } from '@/hooks/usePapers';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { ArrowLeft, BookOpen, ExternalLink, Sparkles, FileText, CheckCircle2, Bookmark, Star } from 'lucide-react';
+import { ArrowLeft, BookOpen, ExternalLink, Sparkles, FileText, CheckCircle2, Bookmark, Star, Copy, Check } from 'lucide-react';
 import api from '@/services/api';
 
 export default function PaperDetail() {
@@ -13,7 +13,8 @@ export default function PaperDetail() {
 
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'methodology' | 'limitations' | 'notes'>('overview');
+  const [copiedBibtex, setCopiedBibtex] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'methodology' | 'limitations' | 'bibtex' | 'notes'>('overview');
 
   const handleStatusChange = (status: string) => {
     updatePaper.mutate({ id: id!, data: { reading_status: status as any } });
@@ -36,6 +37,33 @@ export default function PaperDetail() {
     }
   };
 
+  const generateBibtex = () => {
+    if (!paper) return '';
+    const cleanKey = (paper.title || 'paper')
+      .split(' ')[0]
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase() + (paper.publication_year || '2024');
+    const authors = Array.isArray(paper.authors)
+      ? paper.authors.map((a: any) => a.name || a).join(' and ')
+      : 'Authors';
+
+    return `@article{${cleanKey},
+  title = {${paper.title}},
+  author = {${authors}},
+  year = {${paper.publication_year || 2024}},
+  journal = {${paper.venue || 'ArXiv Preprint'}},
+  doi = {${paper.doi || 'N/A'}},
+  eprint = {${paper.arxiv_id || 'N/A'}}
+}`;
+  };
+
+  const handleCopyBibtex = () => {
+    const bib = generateBibtex();
+    navigator.clipboard.writeText(bib);
+    setCopiedBibtex(true);
+    setTimeout(() => setCopiedBibtex(false), 3000);
+  };
+
   if (isLoading) {
     return <div className="text-slate-400 text-center py-16">Loading paper details...</div>;
   }
@@ -53,7 +81,7 @@ export default function PaperDetail() {
         <ArrowLeft className="w-4 h-4" /> Back to Paper Library
       </button>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 sm:p-8">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
           <div className="space-y-3 flex-1">
             <div className="flex items-center gap-3">
@@ -147,7 +175,7 @@ export default function PaperDetail() {
 
         {/* Navigation Tabs */}
         <div className="flex border-b border-slate-800 mt-8 gap-6 text-sm font-medium">
-          {(['overview', 'methodology', 'limitations', 'notes'] as const).map((tab) => (
+          {(['overview', 'methodology', 'limitations', 'bibtex', 'notes'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -157,7 +185,7 @@ export default function PaperDetail() {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {tab}
+              {tab === 'bibtex' ? 'BibTeX Citation' : tab}
             </button>
           ))}
         </div>
@@ -188,6 +216,24 @@ export default function PaperDetail() {
                 <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Acknowledged Limitations & Future Work</h3>
                 <p className="whitespace-pre-wrap">{paper.limitations || 'No explicit limitations logged yet.'}</p>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'bibtex' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">BibTeX Citation Entry</h3>
+                <button
+                  onClick={handleCopyBibtex}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition-colors"
+                >
+                  {copiedBibtex ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedBibtex ? 'Copied to Clipboard!' : 'Copy BibTeX'}
+                </button>
+              </div>
+              <pre className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-indigo-300 overflow-x-auto">
+                {generateBibtex()}
+              </pre>
             </div>
           )}
 
