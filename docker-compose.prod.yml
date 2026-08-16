@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: research_os_prod_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-research_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+      POSTGRES_DB: ${DB_NAME:-research_os}
+    ports:
+      - "5432:5432"
+    volumes:
+      - prod_postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-research_user} -d ${DB_NAME:-research_os}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: research_os_prod_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - prod_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: research_os_prod_backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-research_os}
+      DB_USER: ${DB_USER:-research_user}
+      DB_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+      DB_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:-research_os_jwt_super_secret_key_change_in_production_32chars}
+      JWT_EXPIRY: 24h
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: research_os_prod_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  prod_postgres_data:
+  prod_redis_data:

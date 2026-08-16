@@ -1,0 +1,40 @@
+import { Router } from 'express';
+import { authRouter } from '../controller/auth.controller';
+import { fieldRouter } from '../controller/field.controller';
+import { projectRouter } from '../controller/project.controller';
+import { paperRouter } from '../controller/paper.controller';
+import { problemRouter } from '../controller/problem.controller';
+import { solutionRouter } from '../controller/solution.controller';
+import { gapRouter } from '../controller/gap.controller';
+import { hypothesisRouter } from '../controller/hypothesis.controller';
+import { experimentRouter } from '../controller/experiment.controller';
+import { datasetRouter } from '../controller/dataset.controller';
+import { algorithmRouter } from '../controller/algorithm.controller';
+import { noteRouter } from '../controller/note.controller';
+import { researcherRouter } from '../controller/researcher.controller';
+import { citationRouter } from '../controller/citation.controller';
+import { searchRouter } from '../controller/search.controller';
+import { dashboardRouter } from '../controller/dashboard.controller';
+import { aiRouter } from '../controller/ai.controller';
+
+const router = Router();
+
+router.use('/auth', authRouter);
+router.use('/fields', fieldRouter);
+router.use('/projects', projectRouter);
+router.use('/papers', paperRouter);
+router.use('/problems', problemRouter);
+router.use('/solutions', solutionRouter);
+router.use('/gaps', gapRouter);
+router.use('/hypotheses', hypothesisRouter);
+router.use('/experiments', experimentRouter);
+router.use('/datasets', datasetRouter);
+router.use('/algorithms', algorithmRouter);
+router.use('/notes', noteRouter);
+router.use('/researchers', researcherRouter);
+router.use('/citations', citationRouter);
+router.use('/search', searchRouter);
+router.use('/dashboard', dashboardRouter);
+router.use('/ai', aiRouter);
+
+export const apiRouter = router;
